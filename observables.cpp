@@ -49,14 +49,14 @@ double kineticEnergy2D(const std::vector<Particle2D>& particles)
     return K;
 }
 
-double potentialEnergy2D(const std::vector<Particle2D>& particles)
+double potentialEnergy2D(const std::vector<Particle2D>& particles, double k)
 {
     double U = 0.0;
     int N = particles.size();
 
     // Energía de la trampa armónica
     for(const auto& p : particles){
-        U += 0.5 *0.3* (p.x * p.x + p.y * p.y );
+        U += 0.5 * k * (p.x * p.x + p.y * p.y );
     }
     // Energía por interacción de pares (soft-core)
     for(int i = 0; i < N; i++){

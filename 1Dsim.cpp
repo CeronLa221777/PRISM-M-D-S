@@ -6,11 +6,11 @@
 #include "observables.hpp"
 
 int main() {
-    int N = 10;   // Número de partículas deben ser 10
-    double dt = 0.001; // debería ser 0.001
-    int steps = 30000; // deben ser 30 mil
-    std::vector<Particle1D> particles(N);
-    std::vector<double> pos_init(N);
+    int N = 10;                                 //Número de partículas: deben ser 10
+    double dt = 0.001;                          //intervalo de tiempo: debería ser 0.001
+    int steps = 30000;                          //numero de pasos de integracion: deben ser 30 mil
+    std::vector<Particle1D> particles(N);       //vector que almacena las posiciones y velocidades de cada particula para N particulas 
+    std::vector<double> pos_init(N);            //posiciones iniciales de las particulas
 
     // condiciones iniciales---- Corrección, condiciones iniciales sugeridas por el profesor 
     double start = -3.5;
@@ -27,8 +27,8 @@ int main() {
         particles[i].v = 0.0; 
     }
 
-    std::ofstream traj("trayectoria1D.dat"); // Lo mismo que ya teniamos
-    std::ofstream obs("observables1D.dat"); // Cambio para obtener y pintar los observables
+    std::ofstream traj("trayectoria1Dregen.dat");    //archivo de datos que guarda informacion de  
+    std::ofstream obs("observables1Dregen.dat");     //Cambio para obtener y pintar los observables
 
     // encabezado para el archivo de observables
     obs << "# t K U E\n";

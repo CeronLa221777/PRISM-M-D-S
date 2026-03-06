@@ -27,15 +27,16 @@ void computeAccelerations1D(const std::vector<Particle1D>& particles,
     }
 }
 void computeAccelerations2D(const std::vector<Particle2D>& particles,
-                          std::vector<double>& acc_x,
-                          std::vector<double>& acc_y) //Nos toca calcular por aparte las aceleraciones para no todo meterlo en el verlet
+                            std::vector<double>& acc_x,
+                            std::vector<double>& acc_y,
+                            double k) //Nos toca calcular por aparte las aceleraciones para no todo meterlo en el verlet
 {
     int N = particles.size();
     double rcut2 = 16;
     // Trampa armónica
     for(int i = 0; i < N; i++){
-        acc_x[i] = -0.3*particles[i].x;
-        acc_y[i] = -0.3*particles[i].y;
+        acc_x[i] = -k*particles[i].x;
+        acc_y[i] = -k*particles[i].y;
     }
     // Interacción por pares (soft-core)
     for(int i = 0; i < N; i++){
@@ -79,27 +80,85 @@ void velocityVerlet1D(std::vector<Particle1D>& particles, double dt)
     }
 }
 
-void velocityVerlet2D(std::vector<Particle2D>& particles, double dt)
+void velocityVerlet2D(std::vector<Particle2D>& particles, double dt,
+                        double k, double xmin, double xmax, double ymin, double ymax,
+                        bool useBoundaries)
 {
     int N = particles.size();
     std::vector<double> acc_x(N);
     std::vector<double> acc_y(N);
 
-    computeAccelerations2D(particles, acc_x, acc_y); // Calculamos aceleración en configuración "inicial"
+    computeAccelerations2D(particles, acc_x, acc_y, k);         //Calculamos aceleración en configuración "inicial"
     for(int i = 0; i < N; i++){
         //Movimiento en x
-        particles[i].vx += 0.5 * acc_x[i] * dt;// afectamos la velocidad de la partícula
-        particles[i].x += particles[i].vx * dt;// corregimos la posición
+        particles[i].vx += 0.5 * acc_x[i] * dt;                 //Actualizamos velocidades medio paso
+        particles[i].x += particles[i].vx * dt;                 //Corregimos la posición paso entero
         //Movimiento en y 
         particles[i].vy += 0.5 * acc_y[i] * dt;
         particles[i].y += particles[i].vy * dt;
     }
 
-    computeAccelerations2D(particles, acc_x, acc_y); // Calculamos la aceleración con la nueva configuración de posiciones
+    if (useBoundaries){
+    applyReflectiveBC2D(particles, xmin, xmax, ymin, ymax);     //Checkeamos condicion: agregar condiciones de frontera
+    }
+    
+    computeAccelerations2D(particles, acc_x, acc_y, k);         //Calculamos la aceleración con la nueva configuración de posiciones
 
     for(int i = 0; i < N; i++){
-        particles[i].vx += 0.5 * acc_x[i] * dt; // Nueva velocidad de la partícula
+        particles[i].vx += 0.5 * acc_x[i] * dt;                 //Nueva velocidad de la partícula
         particles[i].vy += 0.5 * acc_y[i] * dt;
     }
 }
 
+void applyReflectiveBC1D(std::vector<Particle1D>& particles,
+                         double xmin,
+                         double xmax)
+{
+    for (auto& p : particles) {
+
+        // pared izquierda
+        if (p.x < xmin) {
+            p.x = 2.0 * xmin - p.x;  // reflejar posicion
+            p.v = -p.v;              // invertir velocidad
+        }
+
+        // pared derecha
+        if (p.x > xmax) {
+            p.x = 2.0 * xmax - p.x;  // reflejar posicion
+            p.v = -p.v;              // invertir velocidad
+        }
+    }
+}
+
+//aplica condiciones de frontera reflectivas 
+void applyReflectiveBC2D(std::vector<Particle2D>& particles,
+                         double xmin, double xmax,
+                         double ymin, double ymax)
+{
+    for (auto& p : particles) {
+
+        // pared izquierda
+        if (p.x < xmin) {
+            p.x = 2.0 * xmin - p.x;
+            p.vx = -p.vx;
+        }
+
+        // pared derecha
+        if (p.x > xmax) {
+            p.x = 2.0 * xmax - p.x;
+            p.vx = -p.vx;
+        }
+
+        // pared inferior
+        if (p.y < ymin) {
+            p.y = 2.0 * ymin - p.y;
+            p.vy = -p.vy;
+        }
+
+        // pared superior
+        if (p.y > ymax) {
+            p.y = 2.0 * ymax - p.y;
+            p.vy = -p.vy;
+        }
+    }
+}

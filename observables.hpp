@@ -10,9 +10,9 @@ double kineticEnergy1D(const std::vector<Particle1D>& particles); // const hace 
 //std:: es el prefijo del namespace estándar de C++.
 //Se usa para decirle al compilador de dónde viene un símbolo (función, clase, objeto)
 // Energía potencial (forma funcional editable)
-double potentialEnergy1D(const std::vector<Particle1D>& particles);
+double potentialEnergy1D(const std::vector<Particle1D>& particles, double k);
 
 double kineticEnergy2D(const std::vector<Particle2D>& particles);
-double potentialEnergy2D(const std::vector<Particle2D>& particles);
+double potentialEnergy2D(const std::vector<Particle2D>& particles, double k);
 
 #endif
