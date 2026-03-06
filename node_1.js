@@ -1,5 +1,5 @@
 let a = 1;
 let b = 2;
-let c = a + b;
+let c = a - b;
 
-console.log("la suma es", c);
+console.log("la resta es", c);
