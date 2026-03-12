@@ -11,4 +11,10 @@ struct Particle2D {
     double vx, vy;//guardamos posiciónde partícula
 };
 
+struct Particle3D {
+    double x, y, z;
+    double vx, vy, vz;
+};
+
+
 #endif

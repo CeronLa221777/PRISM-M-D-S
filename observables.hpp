@@ -15,4 +15,8 @@ double potentialEnergy1D(const std::vector<Particle1D>& particles, double k);
 double kineticEnergy2D(const std::vector<Particle2D>& particles);
 double potentialEnergy2D(const std::vector<Particle2D>& particles, double k);
 
+double kineticEnergy3D(const std::vector<Particle3D>& particles);
+double potentialEnergy3D(const std::vector<Particle3D>& particles, double k);
+
+
 #endif

@@ -4,6 +4,7 @@ simulationring
 calculoverletboundary2D
 *.o
 *.exe
+*.x
 
 # Archivos de datos de trayectorias (PESADOS)
 *.dat
