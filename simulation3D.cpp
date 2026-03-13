@@ -11,8 +11,8 @@
 
 int main() {
     constexpr double PI = 3.14159265358979323846;
-    int N = 15;                     // número de partículas
-    double v_initial = 2.0;         // velocidad inicial
+    int N = 17;                     // número de partículas
+    double v_initial = 0.3;         // velocidad inicial
     double radius = 7.0;            // radio esfera 3D
 
     // Switches para elegir dimensionalidad 
@@ -30,9 +30,9 @@ int main() {
     double z_min=-10.0, z_max=10.0;
 
     //Condiciones frontera periódica
-    double Lx = 10;
-    double Ly = 10;
-    double Lz = 10;
+    double Lx = 20;
+    double Ly = 20;
+    double Lz = 20;
 
     // Paso temporal
     double dt = 0.001;
@@ -69,20 +69,27 @@ int main() {
             particles[i].vz = 0.0;
         }
         else if(use_2D){
-            // === Inicialización 2D ===
-            double phi = 2.0 * PI * i / N; // ángulo para distribuir en círculo en xy
-            double base_x = radius * std::cos(phi);
-            double base_y = radius * std::sin(phi);
-            double base_z = 0.0;           // plano z=0
 
-            if(perturbation){
-                particles[i].x = base_x + dist(gen);
-                particles[i].y = base_y + dist(gen);
-            } else {
-                particles[i].x = base_x;
-                particles[i].y = base_y;
+            double base_x, base_y;
+
+            if(N <= 10){
+            double phi = 2.0 * PI * i / N;
+            base_x = radius * cos(phi);
+            base_y = radius * sin(phi);
             }
-            particles[i].z = 0.0;           // siempre plano z=0
+            else{
+            std::uniform_real_distribution<double> distx(-Lx/2.0, Lx/2.0);
+            std::uniform_real_distribution<double> disty(-Ly/2.0, Ly/2.0);
+
+            do{
+                base_x = distx(gen);
+                base_y = disty(gen);
+            }while(tooClose(particles,base_x,base_y,0.0,i,1.0));
+            }
+
+            particles[i].x = base_x;
+            particles[i].y = base_y;
+            particles[i].z = 0.0;
 
             if(use_rotation){
                 double r_planar = std::sqrt(base_x*base_x + base_y*base_y);
@@ -172,7 +179,7 @@ int main() {
 
     // Construir nombres de archivo finales
     std::string suffix = ss.str();
-    std::string traj_filename = "trayectoria_" + suffix + ".xyz";
+    std::string traj_filename = "trayectoria_" + suffix + ".dat";
     std::string obs_filename  = "observables_" + suffix + ".dat";
 
     // Ahora traj_filename y obs_filename reflejan correctamente 1D, 2D o 3D

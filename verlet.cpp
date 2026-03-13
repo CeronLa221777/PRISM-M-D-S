@@ -163,3 +163,22 @@ void applyPeriodicBoundary(std::vector<Particle3D>& particles,
             p.z += Lz;
     }
 }
+//Distribución condiciones iniciales
+
+
+bool tooClose(const std::vector<Particle3D>& particles,
+              double x, double y, double z,
+              int current,
+              double minDist)
+{
+    for(int j=0;j<current;j++){
+        double dx = x - particles[j].x;
+        double dy = y - particles[j].y;
+        double dz = z - particles[j].z;
+
+        double r2 = dx*dx + dy*dy + dz*dz;
+
+        if(r2 < minDist*minDist) return true;
+    }
+    return false;
+}

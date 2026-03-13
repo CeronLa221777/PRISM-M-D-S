@@ -38,4 +38,11 @@ void applyReflectiveBC3D(std::vector<Particle3D>& particles,
 void applyPeriodicBoundary(std::vector<Particle3D>& particles,
                            double Lx, double Ly, double Lz);
 //std::vec..bla bla bla es el sistema de N partículas, & se pasa por ref no se copia memoria Estos es la interfaz del integrador
+//Ciudar las condiciones iniciales para que no se sobrepongan las partículas
+bool tooClose(const std::vector<Particle3D>& particles,
+              double x, double y, double z,
+              int current,
+              double minDist);
+
+
 #endif
