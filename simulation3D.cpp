@@ -11,7 +11,7 @@
 
 int main() {
     constexpr double PI = 3.14159265358979323846;
-    int N = 17;                     // número de partículas
+    int N = 15;                     // número de partículas
     double v_initial = 0.3;         // velocidad inicial
     double radius = 7.0;            // radio esfera 3D
 
