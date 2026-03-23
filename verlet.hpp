@@ -2,6 +2,7 @@
 #define VERLET_HPP
 
 #include <vector>
+#include <random>
 
 
 
@@ -40,6 +41,7 @@ void applyReflectiveBC3D(std::vector<Particle3D>& particles,
 void applyPeriodicBoundary(std::vector<Particle3D>& particles,
                            double Lx, double Ly, double Lz);
 //std::vec..bla bla bla es el sistema de N partículas, & se pasa por ref no se copia memoria Estos es la interfaz del integrador
+
 //Ciudar las condiciones iniciales para que no se sobrepongan las partículas
 bool tooClose(const std::vector<Particle3D>& particles,
               double x, double y, double z,
@@ -47,6 +49,14 @@ bool tooClose(const std::vector<Particle3D>& particles,
               double minDist,
               bool usePBounds,
               double Lx, double Ly, double Lz);
+
+// Termostato de Andersen
+void applyAndersenThermostat(std::vector<Particle3D>& particles,
+                             double T_target,
+                             double nu,
+                             double dt,
+                             int dim,
+                             std::mt19937& gen);
 
 
 #endif

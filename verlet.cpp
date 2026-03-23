@@ -1,5 +1,6 @@
 #include "verlet.hpp"
 #include <cmath>
+#include <random>
 
 constexpr double RCUT2 = 16.0; //radio de cort definido arriba en el codigo
 
@@ -183,8 +184,7 @@ bool tooClose(const std::vector<Particle3D>& particles,
               int current,
               double minDist,
               bool usePBounds,
-              double Lx, double Ly, double Lz)
-{
+              double Lx, double Ly, double Lz){
     double minDist2 = minDist * minDist;
 
     for(int j = 0; j < current; j++){
@@ -206,4 +206,31 @@ bool tooClose(const std::vector<Particle3D>& particles,
     }
 
     return false;
+}
+
+// Termostato de Andersen
+void applyAndersenThermostat(std::vector<Particle3D>& particles,
+                             double T_target,
+                             double nu,
+                             double dt,
+                             int dim,
+                             std::mt19937& gen){
+    // Distribución uniforme para la probabilidad de colisión
+    std::uniform_real_distribution<double> dist_prob(0.0, 1.0);
+    
+    // Distribución normal (Maxwell-Boltzmann) para las nuevas velocidades
+    std::normal_distribution<double> dist_vel(0.0, std::sqrt(T_target));
+    
+    double collision_prob = nu * dt;
+    
+    for(auto& p : particles){
+        // ¿Choca esta partícula con el baño térmico?
+        if(dist_prob(gen) < collision_prob){
+            
+            // Asignar nuevas velocidades dependiendo de la dimensionalidad
+            if(dim >= 1) p.vx = dist_vel(gen);
+            if(dim >= 2) p.vy = dist_vel(gen);
+            if(dim == 3) p.vz = dist_vel(gen);
+        }
+    }
 }
