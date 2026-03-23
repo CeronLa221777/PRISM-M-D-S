@@ -20,16 +20,16 @@ A versatile, from-scratch Molecular Dynamics engine written in C++17. This proje
 
 ## 🛠️ Compilation & Usage
 
-This project utilizes the `<filesystem>` library for file management, requiring a compiler that supports **C++17** or higher.
+This project utilizes the `<filesystem>` library for file management, requiring a compiler that supports **C++17** or higher. This project also utilizes a `Makefile` for streamlined compilation, automatically applying flags for maximum performance and modern file system management.
 
 **To compile (Linux):**
 ```bash
-g++ -O3 simulation3D.cpp verlet.cpp observables.cpp -o sim
+make
 ```
 
 ## To run:
 ```bash
-./sim     # On Linux/macOS
+./sim3D     # On Linux/macOS
 ```
 
 ## 📊 Data Visualization

@@ -85,11 +85,6 @@ int main() {
     std::mt19937 gen(42);
     std::uniform_real_distribution<double> dist(-noise_amp, noise_amp);
 
-    // Variables auxiliares 1D
-    std::vector<double> pos_init(N);
-    double start = -3.5;
-    double step  = 1.0;
-
     // =========================================================================
     // STEP 2: INICIALIZACIÓN DE PARTÍCULAS
     // =========================================================================
