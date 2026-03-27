@@ -17,13 +17,13 @@ enum class Placement {Sphere, Uniform}; // Clase para las posiciones posibles de
 
 int main() {
     constexpr double PI = 3.14159265358979323846;
-    int N = 200;                     // número de partículas
-    double rho = 0.05;              // densidad del sistema
+    int N = 1000;                     // número de partículas
+    double rho = 0.25;              // densidad del sistema
     double v_initial = 1.0;         // velocidad inicial
     
     // === definicion condiciones basicas del sistema ===
     Dimension sim_dim = Dimension::D3;  // escogemos la dimension del sistema poniendo D1, D2, D3
-    Placement placement = Placement::Uniform; //escogemos si las particulas se distribuyen de forma uniforme o en una "esfera"
+    Placement placement = Placement::Sphere; //escogemos si las particulas se distribuyen de forma uniforme o en una "esfera"
 
     // Switches para elegir condiones del sistema
     bool use_rotation = false;       // rotación 2D o 3D
