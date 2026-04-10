@@ -13,13 +13,13 @@
 
 
 enum class Dimension {D1, D2, D3};      // clase para las dimensiones posibles del experimento (1D, 2D, 3D)
-enum class Placement {Sphere, Uniform}; // Clase para las posiciones posibles de las particulas (Esfera al rededor del orignes, deistribucion uniforme)
+enum class Placement {Sphere, Uniform}; // Clase para las posiciones posibles de las particulas (Esfera al rededor del orignes, distribucion uniforme)
 
 int main() {
     constexpr double PI = 3.14159265358979323846;
-    int N = 1000;                     // número de partículas
+    int N = 100;                     // número de partículas
     double rho = 0.25;              // densidad del sistema
-    double v_initial = 1.0;         // velocidad inicial
+    double v_initial = 0.0;         // velocidad inicial
     
     // === definicion condiciones basicas del sistema ===
     Dimension sim_dim = Dimension::D3;  // escogemos la dimension del sistema poniendo D1, D2, D3
@@ -32,7 +32,7 @@ int main() {
     bool reflectiveB= false;
 
     //switches para encender termostato de andersen
-    bool use_thermostat = true;     // true: ensamble NVT / false: ensamble NVE
+    bool use_thermostat = false;     // true: ensamble NVT / false: ensamble NVE
     double T_target = 1.0;          // Temperatura objetivo del baño térmico
     double nu = 10.0;               // Frecuencia de colisión con el baño (probabilidad)
 
@@ -72,7 +72,7 @@ int main() {
 
     // Paso temporal
     double dt = 0.001;
-    int steps = 30000;
+    int steps = 50000;
 
     // Acoplamientos
     std::vector<double> k_harmonic = {0.0, 0.0, 0.0};  // z=0
@@ -235,17 +235,18 @@ int main() {
         }
     }
 
-    // =========================================================================
+
+// =========================================================================
     // STEP 3: NOMBRADO Y GUARDADO DE ARCHIVOS
     // =========================================================================
 
-    //crear la carpeta "results" si no existe
+    // crear la carpeta "results" si no existe
     namespace fs = std::filesystem;
     if(!fs::exists("results")){
         fs::create_directory("results");
     }
 
-    //generar los nombres automaticos para los archivos de datos
+    // generar los nombres automáticos para los archivos de datos
     std::stringstream ss;
 
     // Dimensionalidad
@@ -257,31 +258,39 @@ int main() {
 
     ss << (use_thermostat ? "NVT_" : "NVE_");
 
-    //tipo de distribucion
+    // tipo de distribución
     ss << (placement == Placement::Uniform ? "UNI_" : "SPHERE_");
 
-    //Parametros fisicos
-    ss << "N" << N << "_rho" << std::fixed << std::setprecision(3) << rho;  //# particulas y densidad
-    ss << (use_rotation ? "ROT" : "RAD");                                   // Tipo de movimiento
-    ss << "_v" << std::fixed << std::setprecision(1) << v_initial;          // Velocidad inicial con 1 decimal
-    ss << (perturbation ? "_pert" : "_clean");                              // Perturbación
-    ss << (periodicB ? "_period" : "_box");                               // Fronteras
+    // Parámetros físicos
+    ss << "N" << N << "_rho" << std::fixed << std::setprecision(3) << rho;  
+    ss << (use_rotation ? "ROT" : "RAD");                                   
+    ss << "_v" << std::fixed << std::setprecision(1) << v_initial;          
+    ss << (perturbation ? "_pert" : "_clean");                              
+    ss << (periodicB ? "_period" : "_box");                               
 
     // Construir nombres de archivo finales
     std::string suffix = ss.str();
     std::string traj_filename = "results/tray_" + suffix + ".dat";
     std::string obs_filename  = "results/obs_" + suffix + ".dat";
-    // === Ahora traj_filename y obs_filename reflejan correctamente 1D, 2D o 3D ===
+    std::string rdf_filename  = "results/rdf_" + suffix + ".dat"; 
 
-    //guardando los observables
-    std::ofstream traj(traj_filename); // Lo mismo que ya teniamos
-    std::ofstream obs(obs_filename); // Cambio para obtener y pintar los observables
+    // Guardando los archivos
+    std::ofstream traj(traj_filename); 
+    std::ofstream obs(obs_filename); 
 
     // =========================================================================
-    // STEP 4: CALCULO DE TRAYECTORIAS Y OBSERVABLES(Normalizados por N)
+    // STEP 4: CALCULO DE TRAYECTORIAS Y OBSERVABLES
     // =========================================================================
 
-    //determinar los grados de libertad del sistema para calculo de la temperatura
+    // Configuración para la Función de Distribución Radial (RDF)
+    double dr_rdf = 0.05;                       // Resolución del histograma
+    double max_dist_rdf = L / 2.0;              // Límite por Imagen Mínima
+    int num_bins_rdf = static_cast<int>(max_dist_rdf / dr_rdf);
+    std::vector<double> rdf_hist(num_bins_rdf, 0.0);
+    int rdf_snapshots = 0;
+    int sample_interval_rdf = 50;               // Muestrear cada 50 pasos para eficiencia
+
+    // determinar los grados de libertad del sistema para calculo de la temperatura
     double d_f = 3.0;
     if(sim_dim == Dimension::D1) d_f = 1.0;
     else if(sim_dim == Dimension::D2) d_f = 2.0;
@@ -296,15 +305,21 @@ int main() {
 
         double t = i * dt;
 
-        velocityVerlet3D(particles, dt, k_harmonic, x_min, x_max, y_min, y_max, z_min, z_max, reflectiveB, periodicB, Lx,Ly,Lz);
+        velocityVerlet3D(particles, dt, k_harmonic, x_min, x_max, y_min, y_max, z_min, z_max, reflectiveB, periodicB, Lx, Ly, Lz);
 
-        //aplicar el termostato si el sistema esta en NVT
+        // aplicar el termostato si el sistema esta en NVT
         if (use_thermostat) {
             int current_dim = 3;
             if (sim_dim == Dimension::D1) current_dim = 1;
             else if (sim_dim == Dimension::D2) current_dim = 2;
             
             applyAndersenThermostat(particles, T_target, nu, dt, current_dim, gen);
+        }
+
+        // --- Muestreo de la RDF (Solo si es 3D y cada N pasos) ---
+        if (sim_dim == Dimension::D3 && i % sample_interval_rdf == 0) {
+            updateRDF3D(particles, rdf_hist, dr_rdf, periodicB, Lx, Ly, Lz);
+            rdf_snapshots++;
         }
 
         // Trayectoria partículas
@@ -320,10 +335,10 @@ int main() {
 
         // archivo observables
         double K_total = kineticEnergy3D(particles);
-        double U_total = potentialEnergy3D(particles, k_harmonic, periodicB,Lx,Ly,Lz);
+        double U_total = potentialEnergy3D(particles, k_harmonic, periodicB, Lx, Ly, Lz);
         double E_total = K_total + U_total;
 
-        //normalizar dividiendo por N
+        // normalizar dividiendo por N
         double K_norm = K_total / N;
         double U_norm = U_total / N;
         double E_norm = E_total / N;
@@ -337,17 +352,22 @@ int main() {
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_seconds = end_time - start_time;
 
+    // --- GUARDAR RDF (Solo si es 3D) ---
+    if (sim_dim == Dimension::D3 && rdf_snapshots > 0) {
+        normalizeAndSaveRDF3D(rdf_hist, rdf_filename, N, Lx, Ly, Lz, rdf_snapshots, dr_rdf);
+    }
+
     std::cout << "Simulacion terminada. Tiempo de computo: " 
               << elapsed_seconds.count() << " segundos.\n";
 
     // Guardar los datos de N y Tiempo en un archivo de benchmark
     std::string bench_filename = "results/benchmark_CT_vs_N.dat";
-    
+        
     // std::ios::app abre el archivo en modo "append" (añadir al final)
     // Si el archivo no existe, lo crea.
     std::ofstream bench_file(bench_filename, std::ios::app); 
-    
-    // Si el archivo está vacío (recién creado), le ponemos un encabezado
+
+        // Si el archivo está vacío (recién creado), le ponemos un encabezado
     std::ifstream bench_check(bench_filename);
     bench_check.seekg(0, std::ios::end);
     if (bench_check.tellg() == 0) {
