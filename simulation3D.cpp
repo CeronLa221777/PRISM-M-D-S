@@ -18,7 +18,7 @@ enum class Placement {Sphere, Uniform}; // Clase para las posiciones posibles de
 int main() {
     constexpr double PI = 3.14159265358979323846;
     int N = 100;                     // número de partículas
-    double rho = 0.25;              // densidad del sistema
+    double rho = 0.20;              // densidad del sistema
     double v_initial = 0.0;         // velocidad inicial
     
     // === definicion condiciones basicas del sistema ===
