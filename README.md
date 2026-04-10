@@ -16,7 +16,7 @@ A versatile, from-scratch Molecular Dynamics engine written in C++17. This proje
 * **Ensemble Control:** Toggle effortlessly between Microcanonical (NVE) and Canonical (NVT) ensembles.
 * **Andersen Thermostat:** Features a stochastic Andersen Thermostat to simulate coupling to a phantom heat bath, maintaining a constant target temperature via randomized Maxwell-Boltzmann velocity reassignments.
 * **Normalized Observables:** Tracks Total Energy, Kinetic Energy, and Potential Energy *per particle* (E/N, K/N, U/N), alongside the instantaneous Temperature (T).
-* **Structural Analysis (3D):** The C++ engine natively calculates the **Radial Distribution Function / Pair Correlation Function** $\mathcal{g}(r)$ during the simulation using the Minimum Image Convention. To maximize computational efficiency, the $O(N^2)$ histogram sampling is performed strategically every $X$ steps rather than every integration step.
+* **Structural Analysis (3D):** The C++ engine natively calculates the **Radial Distribution Function / Pair Correlation Function** ($g(r)$) during the simulation using the Minimum Image Convention. To maximize computational efficiency, the $O(N^2)$ histogram sampling is performed strategically every $X$ steps rather than every integration step.
 * **Reduced Units:** Operates in Lennard-Jones/reduced units ($k_B = 1, m = 1$), making the engine universally applicable to different atomic species by applying the proper scaling factors post-simulation.
 
 ## 🛠️ Compilation & Usage
