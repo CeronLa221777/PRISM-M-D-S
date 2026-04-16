@@ -3,16 +3,24 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm> // para std::min
+#include <omp.h>     // Librería OpenMP para paralelización
 
-constexpr double RCUT2 = 16;
-constexpr double PI = 3.14159265358979323846; // Lo definimos aquí para el volumen de los cascarones
+constexpr double RCUT2 = 16.0;
+constexpr double PI = 3.14159265358979323846; 
 
 //---------3D-------------------------------------------
 double kineticEnergy3D(const std::vector<Particle3D>& particles)
 {
     double K = 0.0;
-    for(const auto& p : particles)
-        K += 0.5 *( p.vx * p.vx + p.vy * p.vy + p.vz * p.vz); // masa = 1
+    int N = particles.size();
+    
+    // Paralelizamos y sumamos de forma segura en la variable K
+    #pragma omp parallel for reduction(+:K)
+    for(int i = 0; i < N; i++) {
+        K += 0.5 * (particles[i].vx * particles[i].vx + 
+                    particles[i].vy * particles[i].vy + 
+                    particles[i].vz * particles[i].vz);
+    }
     return K;
 }
 
@@ -31,11 +39,15 @@ double potentialEnergy3D(const std::vector<Particle3D>& particles,
     double rcut2 = RCUT2;
 
     // Energía de la trampa armónica
-    for(const auto& p : particles){
-        U += 0.5 * (kx*p.x*p.x + ky*p.y*p.y + kz*p.z*p.z);
+    #pragma omp parallel for reduction(+:U)
+    for(int i = 0; i < N; i++){
+        U += 0.5 * (kx*particles[i].x*particles[i].x + 
+                    ky*particles[i].y*particles[i].y + 
+                    kz*particles[i].z*particles[i].z);
     }
 
-    // Energía de interacción por pares
+    // Energía de interacción por pares (Cuello de botella)
+    #pragma omp parallel for schedule(dynamic) reduction(+:U)
     for(int i = 0; i < N; i++){
         for(int j = i + 1; j < N; j++){
 
@@ -53,10 +65,8 @@ double potentialEnergy3D(const std::vector<Particle3D>& particles,
             double r2 = dx*dx + dy*dy + dz*dz;
 
             if(r2 < rcut2){
-
                 double r6 = r2*r2*r2;
                 double r12 = r6*r6;
-
                 U += 1.0 / r12;
             }
         }
@@ -79,6 +89,8 @@ void updateRDF3D(const std::vector<Particle3D>& particles,
     // Por convención de imagen mínima, no tiene sentido medir más allá de L/2
     double max_dist = std::min({Lx, Ly, Lz}) / 2.0;
 
+    // Paralelizamos la recolección de distancias
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < N; i++) {
         for (int j = i + 1; j < N; j++) {
             
@@ -97,9 +109,12 @@ void updateRDF3D(const std::vector<Particle3D>& particles,
 
             // Solo agregamos si está dentro de la caja mínima medible
             if (r < max_dist) {
-                int bin = static_cast<int>(r / dr);
+                // Cambiado a size_t para solucionar el warning del compilador
+                size_t bin = static_cast<size_t>(r / dr); 
+                
                 if (bin < rdf_hist.size()) {
-                    // Sumamos 2 porque la distancia de i->j es la misma que de j->i
+                    // atomic previene que dos hilos intenten sumar al mismo bin al mismo tiempo
+                    #pragma omp atomic
                     rdf_hist[bin] += 2.0; 
                 }
             }
@@ -115,6 +130,9 @@ void normalizeAndSaveRDF3D(const std::vector<double>& rdf_hist,
                            int N, double Lx, double Ly, double Lz,
                            int num_snapshots, double dr)
 {
+    // Esta función es muy rápida y solo se llama una vez al final. 
+    // No requiere paralelización.
+    
     std::ofstream out(filename);
     if (!out.is_open()) {
         std::cerr << "[ERROR] No se pudo crear el archivo " << filename << std::endl;

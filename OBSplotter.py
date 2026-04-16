@@ -6,7 +6,7 @@ import os
 # ==========================================
 # 1. CONFIGURACIÓN GENERAL
 # ==========================================
-suffix = "3D_NVT_SPHERE_N100_rho0.250RAD_v0.0_pert_period"
+suffix = "3D_NVT_UNI_N100_rho0.250RAD_v0.0_pert_period"
 
 obs_path = f"results/obs_{suffix}.dat"
 tray_path = f"results/tray_{suffix}.dat"
@@ -69,7 +69,7 @@ fig1.savefig(output_path_4panel, dpi=300, bbox_inches='tight')
 if "3D_" in suffix and "NVT" in suffix:
     fig2, ax_t = plt.subplots(figsize=(8, 5))
     ax_t.plot(t_obs, T, color='purple', alpha=0.3, label='Instantaneous T')
-    ax_t.plot(t_obs, T_avg, color='darkviolet', linewidth=2, label='Accumulated Average $\langle T \rangle$')
+    ax_t.plot(t_obs, T_avg, color='darkviolet', linewidth=2, label=r'Accumulated Average $\langle T \rangle$')
     
     ax_t.set_title(f'Temperature Evolution (NVT Thermostat)\n{suffix}', fontweight='bold')
     ax_t.set_xlabel('Time')

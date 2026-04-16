@@ -1,6 +1,9 @@
 # 1. Variables (Makes it easy to change things later)
 CXX = g++
-CXXFLAGS = -std=c++17 -O3 -Wall
+# Añadimos -fopenmp a las banderas de compilación
+CXXFLAGS = -std=c++17 -O3 -Wall -fopenmp
+# Añadimos -fopenmp a las banderas de enlazado (linking)
+LDFLAGS = -fopenmp
 TARGET = sim3D.x
 SRCS = simulation3D.cpp verlet.cpp observables.cpp
 OBJS = $(SRCS:.cpp=.o)
@@ -10,7 +13,7 @@ all: $(TARGET)
 
 # 3. How to build the final executable
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
 # 4. How to compile each individual .cpp file into an .o (object) file
 %.o: %.cpp
@@ -19,3 +22,4 @@ $(TARGET): $(OBJS)
 # 5. A cleanup rule to delete compiled files so you can start fresh
 clean:
 	rm -f $(OBJS) $(TARGET)
+	

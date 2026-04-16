@@ -8,6 +8,7 @@
 #include <random>
 #include <chrono>
 #include <filesystem>
+#include <omp.h>
 #include "verlet.hpp"
 #include "observables.hpp"
 
@@ -16,14 +17,17 @@ enum class Dimension {D1, D2, D3};      // clase para las dimensiones posibles d
 enum class Placement {Sphere, Uniform}; // Clase para las posiciones posibles de las particulas (Esfera al rededor del orignes, distribucion uniforme)
 
 int main() {
+    // --- Limitar OpenMP a 4 núcleos ---
+    omp_set_num_threads(4);
+
     constexpr double PI = 3.14159265358979323846;
     int N = 100;                     // número de partículas
-    double rho = 0.20;              // densidad del sistema
+    double rho = 0.5;              // densidad del sistema
     double v_initial = 0.0;         // velocidad inicial
     
     // === definicion condiciones basicas del sistema ===
     Dimension sim_dim = Dimension::D3;  // escogemos la dimension del sistema poniendo D1, D2, D3
-    Placement placement = Placement::Sphere; //escogemos si las particulas se distribuyen de forma uniforme o en una "esfera"
+    Placement placement = Placement::Uniform; //escogemos si las particulas se distribuyen de forma uniforme o en una "esfera"
 
     // Switches para elegir condiones del sistema
     bool use_rotation = false;       // rotación 2D o 3D
@@ -32,7 +36,7 @@ int main() {
     bool reflectiveB= false;
 
     //switches para encender termostato de andersen
-    bool use_thermostat = false;     // true: ensamble NVT / false: ensamble NVE
+    bool use_thermostat = true;     // true: ensamble NVT / false: ensamble NVE
     double T_target = 1.0;          // Temperatura objetivo del baño térmico
     double nu = 10.0;               // Frecuencia de colisión con el baño (probabilidad)
 
@@ -278,19 +282,22 @@ int main() {
     std::ofstream traj(traj_filename); 
     std::ofstream obs(obs_filename); 
 
-    // =========================================================================
-    // STEP 4: CALCULO DE TRAYECTORIAS Y OBSERVABLES
+// =========================================================================
+    // STEP 4: CALCULO DE TRAYECTORIAS Y OBSERVABLES (OPTIMIZADO)
     // =========================================================================
 
     // Configuración para la Función de Distribución Radial (RDF)
-    double dr_rdf = 0.05;                       // Resolución del histograma
-    double max_dist_rdf = L / 2.0;              // Límite por Imagen Mínima
+    double dr_rdf = 0.05;                       
+    double max_dist_rdf = L / 2.0;              
     int num_bins_rdf = static_cast<int>(max_dist_rdf / dr_rdf);
     std::vector<double> rdf_hist(num_bins_rdf, 0.0);
     int rdf_snapshots = 0;
-    int sample_interval_rdf = 50;               // Muestrear cada 50 pasos para eficiencia
+    int sample_interval_rdf = 80;               
 
-    // determinar los grados de libertad del sistema para calculo de la temperatura
+    // --- NUEVOS INTERVALOS DE MUESTREO ---
+    int sample_interval_obs = 50;  // Guardar energías cada 50 pasos
+    int sample_interval_traj = 100; // Guardar posiciones (pesado) cada 100 pasos
+
     double d_f = 3.0;
     if(sim_dim == Dimension::D1) d_f = 1.0;
     else if(sim_dim == Dimension::D2) d_f = 2.0;
@@ -316,36 +323,34 @@ int main() {
             applyAndersenThermostat(particles, T_target, nu, dt, current_dim, gen);
         }
 
-        // --- Muestreo de la RDF (Solo si es 3D y cada N pasos) ---
+        // --- 1. Muestreo de la RDF (Solo si es 3D) ---
         if (sim_dim == Dimension::D3 && i % sample_interval_rdf == 0) {
             updateRDF3D(particles, rdf_hist, dr_rdf, periodicB, Lx, Ly, Lz);
             rdf_snapshots++;
         }
 
-        // Trayectoria partículas
-        traj << particles.size() <<"\n";
-        traj << "#t = " << t << "\n";
-
-        for(size_t j = 0; j < particles.size(); j++){
-             traj << j << " "
-                  << particles[j].x << " "
-                  << particles[j].y << " "
-                  << particles[j].z << "\n";
+        // --- 2. Guardado de Trayectorias (I/O Lento) ---
+        if (i % sample_interval_traj == 0) {
+            traj << particles.size() <<"\n";
+            traj << "#t = " << t << "\n";
+            for(size_t j = 0; j < particles.size(); j++){
+                 traj << j << " " << particles[j].x << " " << particles[j].y << " " << particles[j].z << "\n";
+            }
         }
 
-        // archivo observables
-        double K_total = kineticEnergy3D(particles);
-        double U_total = potentialEnergy3D(particles, k_harmonic, periodicB, Lx, Ly, Lz);
-        double E_total = K_total + U_total;
+        // --- 3. Guardado de Observables ---
+        if (i % sample_interval_obs == 0) {
+            double K_total = kineticEnergy3D(particles);
+            double U_total = potentialEnergy3D(particles, k_harmonic, periodicB, Lx, Ly, Lz);
+            double E_total = K_total + U_total;
 
-        // normalizar dividiendo por N
-        double K_norm = K_total / N;
-        double U_norm = U_total / N;
-        double E_norm = E_total / N;
+            double K_norm = K_total / N;
+            double U_norm = U_total / N;
+            double E_norm = E_total / N;
+            double T_inst = (2.0*K_norm) / d_f;
 
-        double T_inst = (2.0*K_norm) / d_f;
-
-        obs << t << " " << K_norm << " " << U_norm << " " << E_norm << " " << T_inst << "\n";
+            obs << t << " " << K_norm << " " << U_norm << " " << E_norm << " " << T_inst << "\n";
+        }
     }
 
     // --- FIN DEL CRONÓMETRO ---

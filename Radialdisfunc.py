@@ -8,7 +8,7 @@ import re
 # 1. CONFIGURACIÓN DEL ANÁLISIS
 # ==========================================
 # Define qué ensamble quieres comparar ("NVE" o "NVT")
-target_ensemble = "NVE"  
+target_ensemble = "NVT"  
 
 # Si usas NVT, define la temperatura objetivo para el título
 T_target = 1.0  
@@ -81,7 +81,7 @@ ax.set_ylim(0, max(g_r) * 1.1 if 'g_r' in locals() else 3)
 ax.grid(True, linestyle=':', alpha=0.6)
 
 # Leyenda compacta
-ax.legend(title="System Density", loc='lower right', fontsize='small', title_fontsize='medium', framealpha=0.9)
+ax.legend(title="System Density", loc='upper left', fontsize='small', title_fontsize='medium', framealpha=0.9)
 
 # Guardar y mostrar
 plt.tight_layout()
