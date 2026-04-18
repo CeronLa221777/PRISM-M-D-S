@@ -1,4 +1,4 @@
-# Custom Molecular Dynamics (MD) Engine
+# PRISM: Parallelization & Research of interacting Research Model
 
 A versatile, from-scratch Molecular Dynamics engine written in C++17. This project simulates particle interactions across 1D, 2D, and 3D spaces, allowing for the exploration of thermodynamic observables, phase transitions, and statistical mechanics principles.
 
