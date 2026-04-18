@@ -45,4 +45,8 @@ The visualization scripts automatically detect the ensemble type (NVE vs NVT) fr
   * Automatically extracts the density ($\rho$) from each filename using Regex.
   * Plots a consolidated, color-graded comparative graph of the Radial Distribution Functions across different densities, making phase transitions (gas $\rightarrow$ liquid $\rightarrow$ solid) visually evident.
 
+* **`NvsCTplotter.py` (Performance Benchmarking):** * Analyzes the computational efficiency of the engine by parsing benchmark data to compare execution times across NVE and NVT ensembles.
+  * Generates a dual-panel figure: the first plot visualizes the raw computing time versus the number of particles (demonstrating the expected polynomial growth), while the second plot displays a log-log linearization.
+  * Automatically performs a linear regression on the logarithmic data to extract the slope, explicitly calculating and printing the algorithm's empirical time complexity (e.g., O(N^2)) directly to the terminal.
+
 All generated graphs are saved directly to the `results/` folder as high-resolution `.png` images.
